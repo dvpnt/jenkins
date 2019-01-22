@@ -40,14 +40,15 @@ def makeText() {
   return message
 }
 
-def call(token, chat_id, branches = null, url = 'https://api.telegram.org') {
+def call(token, chat_id, branches = null, url = 'https://api.telegram.org', quiet = true) {
   if (branches == null || !branches.contains(env.BRANCH_NAME)) return;
 
   httpRequest(
     httpMode: 'POST',
     contentType: 'APPLICATION_JSON_UTF8',
     requestBody: """{"parse_mode": "HTML", "chat_id": $chat_id, "text": "${makeText()}"}""",
-    url: url + '/bot' + token + '/sendMessage'
+    url: url + '/bot' + token + '/sendMessage',
+    quiet: quiet
   )
 }
 
