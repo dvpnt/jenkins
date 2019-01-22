@@ -23,7 +23,7 @@ def makeText() {
   def emoji = emojiHash[currentBuild.currentResult]
 
   def changes = getCurrentBuildChanges().inject("") {
-    result, entry -> result + "  \u2219 ${entry.author}: <code>${entry.msg}</code>"
+    result, entry -> result + "  \u2219 ${entry.author}: <code>${entry.msg}</code>\n"
   }
 
   def message = "$emoji <strong>$currentBuild.fullProjectName</strong> "
@@ -44,7 +44,6 @@ def call(token, chat_id, branches = null, url = 'https://api.telegram.org') {
   if (branches == null || !branches.contains(env.BRANCH_NAME)) return;
 
   httpRequest(
-    consoleLogResponseBody: true,
     httpMode: 'POST',
     contentType: 'APPLICATION_JSON_UTF8',
     requestBody: """{"parse_mode": "HTML", "chat_id": $chat_id, "text": "${makeText()}"}""",
