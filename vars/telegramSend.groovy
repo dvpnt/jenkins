@@ -40,16 +40,30 @@ def makeText() {
   return message
 }
 
-def call(token, chat_id, branches = null, url = 'https://api.telegram.org', quiet = true) {
-  if (branches == null || !branches.contains(env.BRANCH_NAME)) return;
+def send(params) {
+  assert params.token != null : 'token is required'
+  assert params.chat_id != null : 'chat_id is required'
+
+  def branches = params.branches == null ? ["develop", "master"] : params.branches
+
+  if (!branches.contains(env.BRANCH_NAME)) return;
 
   httpRequest(
     httpMode: 'POST',
     contentType: 'APPLICATION_JSON_UTF8',
-    requestBody: """{"parse_mode": "HTML", "chat_id": $chat_id, "text": "${makeText()}"}""",
-    url: url + '/bot' + token + '/sendMessage',
-    quiet: quiet
+    requestBody: """{"parse_mode": "HTML", "chat_id": ${params.chat_id}, "text": "${makeText()}"}""",
+    url: params.url + '/bot' + params.token + '/sendMessage'
   )
+}
+
+def call(params = [:]) {
+  withCredentials([string(credentialsId: 'telegramNotificationBotToken', variable: 'token')]) {
+    send(
+      token: params.token ?: token,
+      chat_id: params.chat_id ?: env.TELEGRAM_NOTIFICATION_CHAT_ID,
+      url: params.url ?: env.TELEGRAM_NOTIFICATION_API_URL
+    )
+  }
 }
 
 
