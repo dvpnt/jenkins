@@ -17,7 +17,8 @@ def makeText() {
   def emojiHash = [
     SUCCESS: "\u2705",
     FAILURE: "\ufe0f\u26d4\ufe0f",
-    canceled: "\u26a0"
+    UNSTABLE: "\ufe0f\u26d4\ufe0f",
+    ABORTED: "\u26a0"
   ]
 
   def emoji = emojiHash[currentBuild.currentResult]
@@ -28,14 +29,21 @@ def makeText() {
 
   def message = "$emoji <strong>$currentBuild.fullProjectName</strong> "
   message += "build <a href='${currentBuild.absoluteUrl}display/redirect'>#$currentBuild.number</a> "
-  def causedBy = currentBuild.getBuildCauses();
-  if (causedBy.size() > 0) {
-    message += (changes == "" ? "" : "caused by ") + "${causedBy[0].shortDescription.toLowerCase()} "
+
+  def causes = currentBuild.getBuildCauses()
+  def cause = causes.size() > 0 ? causes[0].shortDescription.toLowerCase() : "";
+
+  if (cause) {
+    if (cause =~ "^started by") {
+      message += "${cause} "
+    } else {
+      message += "caused by ${cause} "
+    }
   }
+
   message += "is <strong>$currentBuild.currentResult</strong>\n"
   message += "\nscm target is <code>${env.GIT_COMMIT[0..8]}</code>\n\n"
-  message += "scm changes:\n"
-  message += changes == "" ? "no changes" : changes
+  message += changes == "" ? "no scm changes" : "scm changes:\n${changes}"
 
   return message
 }
@@ -44,9 +52,9 @@ def send(params) {
   assert params.token != null : 'token is required'
   assert params.chat_id != null : 'chat_id is required'
 
-  def branches = params.branches == null ? ["develop", "master"] : params.branches
+  def branchPattern = params.branchPattern == null ? /(develop|master)/ : params.branchPattern
 
-  if (!branches.contains(env.BRANCH_NAME)) return;
+  if (!(env.BRANCH_NAME =~ branchPattern)) return;
 
   httpRequest(
     httpMode: 'POST',
@@ -61,9 +69,8 @@ def call(params = [:]) {
     send(
       token: params.token ?: token,
       chat_id: params.chat_id ?: env.TELEGRAM_NOTIFICATION_CHAT_ID,
-      url: params.url ?: env.TELEGRAM_NOTIFICATION_API_URL
+      url: params.url ?: env.TELEGRAM_NOTIFICATION_API_URL,
+      branchPattern: params.branchPattern
     )
   }
 }
-
-
