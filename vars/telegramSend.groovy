@@ -69,7 +69,7 @@ def call(params = [:]) {
     send(
       token: params.token ?: token,
       chat_id: params.chat_id ?: env.TELEGRAM_NOTIFICATION_CHAT_ID,
-      url: params.url ?: env.TELEGRAM_NOTIFICATION_API_URL,
+      url: params.url ?: env.TELEGRAM_NOTIFICATION_API_URL ?: 'https://api.telegram.org',
       branchPattern: params.branchPattern
     )
   }
